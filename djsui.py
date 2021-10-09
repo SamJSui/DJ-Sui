@@ -154,16 +154,18 @@ if __name__ == '__main__':
             voice_client.stop()
             playlist.clear()
         else:
-            await ctx.send("The bot is not playing anything at the moment.")
+            await ctx.send("The bot is not playing anything at the moment")
 
     @client.command(name='queue', help='Lists music queue')
     async def queue(ctx):
         index = 1
         voice_client = ctx.message.guild.voice_client
+        if len(playlist) == 0:
+            await ctx.send("There is nothing in the queue")
         if voice_client.is_playing():
             await ctx.send("Current: {}".format(playlist[0]))
         for i in playlist[1:]:
-            await ctx.send("{}. {}".format(index, i))
+            await ctx.send("#{}: {}".format(index, i))
             index += 1
 
     @client.command(name='skip', help='Skips the current song and plays the next one in queue')
@@ -171,13 +173,16 @@ if __name__ == '__main__':
         voice_client = ctx.message.guild.voice_client
         if voice_client.is_playing():
             voice_client.stop()
-            server = ctx.message.guild
-            voice_channel = server.voice_client
-            async with ctx.typing():
-                player = await YTDLSource.from_url(playlist[1], loop=client.loop)
-                voice_channel.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
-                print(player.title)
-            await ctx.send('**Now playing:** {}'.format(player.title))
+            if len(playlist) == 1:
+                await ctx.send("There are no more songs are playing")
+            else:
+                server = ctx.message.guild
+                voice_channel = server.voice_client
+                async with ctx.typing():
+                    player = await YTDLSource.from_url(playlist[1], loop=client.loop)
+                    voice_channel.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
+                    print(player.title)
+                await ctx.send('**Now playing:** {}'.format(player.title))
             playlist.pop(0)
         elif len(playlist) > 0:
             playlist.pop(0)
@@ -191,5 +196,11 @@ if __name__ == '__main__':
         del playlist[1:]
         await ctx.send("Queue cleared.")
 
+    @client.command(name='remove', help='Removes song at queue #')
+    async def remove(ctx, index):
+        index = ctx.message.content.lstrip('?remove')
+        index = int(index)
+        playlist.pop(index)
+        await ctx.send("You have removed the song at #{} from the queue".format(index))
 
     client.run(token)
