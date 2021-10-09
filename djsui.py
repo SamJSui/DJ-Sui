@@ -177,6 +177,9 @@ if __name__ == '__main__':
                 print(player.title)
             await ctx.send('**Now playing:** {}'.format(player.title))
             playlist.pop(0)
+        elif len(playlist) > 0:
+            playlist.pop(0)
+            await ctx.send("Removed from the queue")
         else:
             await ctx.send("The bot is not playing anything at the moment.")
         playlist[0] = player.title
