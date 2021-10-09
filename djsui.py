@@ -6,10 +6,6 @@ if __name__ == '__main__':
 
     client = commands.Bot(command_prefix="?")
 
-    help_command = commands.DefaultHelpCommand(
-        no_category='Commands'
-    )
-
     f = open("token.txt", "r")
     token = f.readline()
 
@@ -83,10 +79,9 @@ if __name__ == '__main__':
 
     @client.command(name='play', help='Plays music')
     async def play(ctx, url):
-
         voice = ctx.message.guild.voice_client
 
-        def is_connected():
+        def is_connected():  # Tests if bot is connected to voice channel
             voice_client = discord.utils.get(ctx.bot.voice_clients, guild=ctx.guild)
             return voice_client and voice_client.is_connected()
 
@@ -102,9 +97,10 @@ if __name__ == '__main__':
 
         if is_connected():
             if voice.is_playing():  # url already added to the playlist, downloads each index
-                player = await YTDLSource.from_url(playlist[1], loop=client.loop)
-                await ctx.send(str('Added {} to queue'.format(player.title)))
-                playlist[1] = player.title
+                index = len(playlist)-1
+                player = await YTDLSource.from_url(playlist[index], loop=client.loop)
+                await ctx.send('**Added:** {} to queue'.format(player.title))
+                playlist[index] = player.title
             else:
                 server = ctx.message.guild
                 voice_channel = server.voice_client
@@ -149,7 +145,7 @@ if __name__ == '__main__':
         if voice_client.is_paused():
             voice_client.resume()
         else:
-            await ctx.send("The bot was not playing anything before this. Use play_song command")
+            await ctx.send("The bot was not playing anything before this. Use play command")
 
     @client.command(name='stop', help='Stops the song')
     async def stop(ctx):
@@ -162,7 +158,13 @@ if __name__ == '__main__':
 
     @client.command(name='queue', help='Lists music queue')
     async def queue(ctx):
-        await ctx.send(playlist)
+        index = 1
+        voice_client = ctx.message.guild.voice_client
+        if voice_client.is_playing():
+            await ctx.send("Current: {}".format(playlist[0]))
+        for i in playlist[1:]:
+            await ctx.send("{}. {}".format(index, i))
+            index += 1
 
     @client.command(name='skip', help='Skips the current song and plays the next one in queue')
     async def skip(ctx):
@@ -188,5 +190,6 @@ if __name__ == '__main__':
     async def clear(ctx):
         del playlist[1:]
         await ctx.send("Queue cleared.")
+
 
     client.run(token)
