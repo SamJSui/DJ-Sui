@@ -36,9 +36,9 @@ if __name__ == '__main__':
             self.url = data.get('url')
 
         @classmethod
-        async def from_url(cls, url, *, loop=None, stream=False):
+        async def from_url(cls, url, *, loop=None, stream=True):
             loop = loop or asyncio.get_event_loop()
-            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download="not stream"))
+            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
 
             if 'entries' in data:
                 # take first item from a playlist
@@ -78,7 +78,7 @@ if __name__ == '__main__':
             await ctx.send("It's already playing")
 
     @client.command(name='play', help='Plays music')
-    async def play(ctx, url):
+    async def play(ctx):
         voice = ctx.message.guild.voice_client
 
         def is_connected():  # Tests if bot is connected to voice channel
@@ -197,10 +197,19 @@ if __name__ == '__main__':
         await ctx.send("Queue cleared.")
 
     @client.command(name='remove', help='Removes song at queue #')
-    async def remove(ctx, index):
+    async def remove(ctx):
         index = ctx.message.content.lstrip('?remove')
         index = int(index)
         playlist.pop(index)
         await ctx.send("You have removed the song at #{} from the queue".format(index))
+
+    @client.command(name='move', help='Moves song in queue to spot')
+    async def move(ctx):
+        points = ctx.message.content.lstrip('?move ')
+        list_points = list(points)
+        tmp = playlist[int(list_points[0])]
+        playlist[int(list_points[0])] = playlist[int(list_points[2])]
+        playlist[int(list_points[2])] = tmp
+        await ctx.send("You moved {} to number #{}!".format(playlist[int(list_points[2])], list_points[2]))
 
     client.run(token)
