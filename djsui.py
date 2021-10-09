@@ -103,7 +103,7 @@ if __name__ == '__main__':
         if is_connected():
             if voice.is_playing():  # url already added to the playlist, downloads each index
                 player = await YTDLSource.from_url(playlist[1], loop=client.loop)
-                await ctx.send(str('Added ', playlist[1], ' to queue'))
+                await ctx.send(str('Added {} to queue'.format(player.title)))
                 playlist[1] = player.title
             else:
                 server = ctx.message.guild
