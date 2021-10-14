@@ -2,14 +2,16 @@ import discord
 from discord.ext import commands
 import youtube_dl
 import asyncio
-import randfacts
-from asgiref.sync import async_to_sync
+from discord import FFmpegPCMAudio
 
 client = commands.Bot(command_prefix="?")
 
 f = open("token.txt", "r")
 token = f.readline()
+# Suppress noise about console usage from errors
 youtube_dl.utils.bug_reports_message = lambda: ''
+
+
 ytdl_format_options = {
     'format': 'bestaudio/best',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
@@ -21,8 +23,9 @@ ytdl_format_options = {
     'quiet': True,
     'no_warnings': True,
     'default_search': 'auto',
-    'source_address': '0.0.0.0'
+    'source_address': '0.0.0.0'  # bind to ipv4 since ipv6 addresses cause issues sometimes
 }
+
 ffmpeg_options = {
     'options': '-vn'
 }
@@ -71,6 +74,7 @@ playlist = []  # Beginning of commands
 
 @client.command(name='play', help='Plays music')
 async def play(ctx):
+
     voice = ctx.message.guild.voice_client
 
     def is_connected():  # Tests if bot is connected to voice channel
@@ -97,6 +101,7 @@ async def play(ctx):
             server = ctx.message.guild
             voice_channel = server.voice_client
             async with ctx.typing():
+                write()
                 player = await YTDLSource.from_url(playlist[0], loop=client.loop)
                 voice_channel.play(player, after=lambda e: asyncio.run_coroutine_threadsafe(after_play(ctx), client.loop))
                 print(player.title)
@@ -117,12 +122,20 @@ async def play(ctx):
 
 
 async def after_play(ctx):
+    voice = discord.utils.get(ctx.bot.voice_clients, guild=ctx.guild)
     playlist.pop(0)
-    server = ctx.message.guild
-    voice_channel = server.voice_client
-    player = await YTDLSource.from_url(playlist[0], loop=client.loop)
-    voice_channel.play(player, after=lambda e: asyncio.run_coroutine_threadsafe(after_play(ctx), client.loop))
-    print(player.title)
+    if len(playlist) > 0:
+        server = ctx.message.guild
+        voice_channel = server.voice_client
+        player = await YTDLSource.from_url(playlist[0], loop=client.loop)
+        voice_channel.play(player, after=lambda e: asyncio.run_coroutine_threadsafe(after_play(ctx), client.loop))
+        print(player.title)
+    else:
+        while True:  # Checks if voice is playing
+            await asyncio.sleep(20)
+            if not voice.is_playing():
+                break
+        await voice.disconnect()
 
 
 @client.command(name='leave', help='Leaves the voice channel')
@@ -221,7 +234,7 @@ async def start(ctx):
         voice_channel = server.voice_client
         async with ctx.typing():
             player = await YTDLSource.from_url(playlist[0], loop=client.loop)
-            voice_channel.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
+            voice_channel.play(player, after=lambda e: asyncio.run_coroutine_threadsafe(after_play(ctx), client.loop))
             print(player.title)
         await ctx.send('**Now playing:** {}'.format(player.title))
     else:
@@ -252,11 +265,5 @@ async def move(ctx):
     await ctx.send("You moved {} to number #{}!".format(playlist[int(list_points[2])], list_points[2]))
 
 
-@client.command(name='fact', help='Have a free fact!')
-async def fact(ctx):
-    x = randfacts.get_fact()
-    await ctx.send(x)
-
-
-client.run(token)
-
+if __name__ == '__main__':
+    client.run(token)
