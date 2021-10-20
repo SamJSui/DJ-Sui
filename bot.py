@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 import youtube_dl
 import asyncio
-from discord import FFmpegPCMAudio
 
 client = commands.Bot(command_prefix="?")
 
@@ -10,7 +9,6 @@ f = open("token.txt", "r")
 token = f.readline()
 # Suppress noise about console usage from errors
 youtube_dl.utils.bug_reports_message = lambda: ''
-
 
 ytdl_format_options = {
     'format': 'bestaudio/best',
@@ -101,10 +99,12 @@ async def play(ctx):
             server = ctx.message.guild
             voice_channel = server.voice_client
             async with ctx.typing():
-                write()
-                player = await YTDLSource.from_url(playlist[0], loop=client.loop)
-                voice_channel.play(player, after=lambda e: asyncio.run_coroutine_threadsafe(after_play(ctx), client.loop))
-                print(player.title)
+                try:
+                    player = await YTDLSource.from_url(playlist[0], loop=client.loop)
+                    voice_channel.play(player, after=lambda e: asyncio.run_coroutine_threadsafe(after_play(ctx), client.loop))
+                    print(player.title)
+                except Exception as x:
+                    print(x)
             await ctx.send('**Now playing:** {}'.format(player.title))
             playlist[0] = player.title
             playlist.pop(0)
@@ -114,9 +114,13 @@ async def play(ctx):
         server = ctx.message.guild
         voice_channel = server.voice_client
         async with ctx.typing():
-            player = await YTDLSource.from_url(playlist[0], loop=client.loop)
-            voice_channel.play(player, after=lambda e: asyncio.run_coroutine_threadsafe(after_play(ctx), client.loop))
-            print(player.title)
+            try:
+                player = await YTDLSource.from_url(playlist[0], loop=client.loop)
+                voice_channel.play(player,
+                                   after=lambda e: asyncio.run_coroutine_threadsafe(after_play(ctx), client.loop))
+                print(player.title)
+            except Exception as x:
+                print(x)
         await ctx.send('**Now playing:** {}'.format(player.title))
         playlist[0] = player.title
 
@@ -213,9 +217,13 @@ async def skip(ctx):
             server = ctx.message.guild
             voice_channel = server.voice_client
             async with ctx.typing():
-                player = await YTDLSource.from_url(playlist[1], loop=client.loop)
-                voice_channel.play(player, after=lambda e: asyncio.run_coroutine_threadsafe(after_play(ctx), client.loop))
-                print(player.title)
+                try:
+                    player = await YTDLSource.from_url(playlist[0], loop=client.loop)
+                    voice_channel.play(player,
+                                       after=lambda e: asyncio.run_coroutine_threadsafe(after_play(ctx), client.loop))
+                    print(player.title)
+                except Exception as x:
+                    print(x)
             await ctx.send('**Now playing:** {}'.format(player.title))
         playlist.pop(0)
     elif len(playlist) > 0:
@@ -233,9 +241,13 @@ async def start(ctx):
         server = ctx.message.guild
         voice_channel = server.voice_client
         async with ctx.typing():
-            player = await YTDLSource.from_url(playlist[0], loop=client.loop)
-            voice_channel.play(player, after=lambda e: asyncio.run_coroutine_threadsafe(after_play(ctx), client.loop))
-            print(player.title)
+            try:
+                player = await YTDLSource.from_url(playlist[0], loop=client.loop)
+                voice_channel.play(player,
+                                   after=lambda e: asyncio.run_coroutine_threadsafe(after_play(ctx), client.loop))
+                print(player.title)
+            except Exception as x:
+                print(x)
         await ctx.send('**Now playing:** {}'.format(player.title))
     else:
         await ctx.send("It's already playing")
