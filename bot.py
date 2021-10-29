@@ -23,6 +23,9 @@ ytdl_format_options = {
     'default_search': 'auto',
     'source_address': '0.0.0.0'  # bind to ipv4 since ipv6 addresses cause issues sometimes
 }
+ytdl_filesystem_options = {
+    '--rm-cache-dir'
+}
 
 ffmpeg_options = {
     'options': '-vn'
@@ -136,7 +139,7 @@ async def after_play(ctx):
         print(player.title)
     else:
         while True:  # Checks if voice is playing
-            await asyncio.sleep(20)
+            await asyncio.sleep(60)
             if not voice.is_playing():
                 break
         await voice.disconnect()
